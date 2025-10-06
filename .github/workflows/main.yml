@@ -1,0 +1,44 @@
+name: Reddit Leadership Automation
+
+on:
+  schedule:
+    # Run every 3 hours
+    - cron: '0 */3 * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  run-automation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install openai google-auth-oauthlib google-api-python-client
+    
+    - name: Create credentials files
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        GOOGLE_TOKEN: ${{ secrets.GOOGLE_TOKEN }}
+      run: |
+        echo "$GOOGLE_CREDENTIALS" > credentials.json
+        echo "$GOOGLE_TOKEN" > token.json
+    
+    - name: Run automation
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        python reddit_automation.py
+    
+    - name: Clean up credentials
+      if: always()
+      run: |
+        rm -f credentials.json token.json
